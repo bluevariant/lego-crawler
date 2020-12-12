@@ -8,7 +8,7 @@ const _ = require("lodash");
 const BASE_URL = "https://rebrickable.com";
 let DIRNAME;
 // Colab
-let driveDir = path.join(__dirname, "../drive");
+let driveDir = "../drive";
 if (fs.existsSync(driveDir)) {
   DIRNAME = path.join(driveDir, "lego");
 } else {
