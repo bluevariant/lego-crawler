@@ -5,10 +5,26 @@ const Queue = require("better-queue");
 const path = require("path");
 const _ = require("lodash");
 
-async function main() {
-  let baseUrl = "https://rebrickable.com";
+const BASE_URL = "https://rebrickable.com";
+let DIRNAME;
+if (fs.existsSync("/gdrive")) {
+  DIRNAME = "/gdrive";
+} else {
+  DIRNAME = __dirname;
+}
 
-  let { data } = await axios.get(baseUrl + "/parts/technic-beams/" + "?format=table");
+async function main() {
+  await crawlPhotos("parts/bricks");
+}
+
+async function crawlPhotos(category) {
+  // category = "/parts/technic-beams/"
+  if (!category.startsWith("/")) category = "/" + category;
+  if (!category.endsWith("/")) category += "/";
+  if (category.includes("?")) {
+    category = category.split("?")[0];
+  }
+  let { data } = await axios.get(BASE_URL + category + "?format=table");
   let $ = cheerio.load(data);
   let baseData = [];
   $("tr").each((i, e) => {
@@ -17,13 +33,13 @@ async function main() {
     let partId = processId($(td[1]).text());
     if (partId === undefined) return;
     let label = $(td[2]).text();
-    let link = baseUrl + $($(td[0]).find("a")[0]).attr("href");
+    let link = BASE_URL + $($(td[0]).find("a")[0]).attr("href");
     baseData.push({ partId, label, link });
   });
   // fs.writeFileSync("base_data.json", JSON.stringify(baseData, null, 2));
   let downloadTask = new Queue(
     async (params, cb) => {
-      let saveToDir = path.join(__dirname, "dataset", params.partId);
+      let saveToDir = path.join(DIRNAME, "dataset", params.partId);
       await fs.ensureDir(saveToDir);
       // if (params.partId === "3005") console.log(params.link);
       let { data } = await axios.get(params.link);
@@ -78,9 +94,9 @@ async function main() {
     })
   );
   // Remove empty folder
-  _.forEach(fs.readdirSync(path.join(__dirname, "dataset")), (dir) => {
+  _.forEach(fs.readdirSync(path.join(DIRNAME, "dataset")), (dir) => {
     try {
-      fs.rmdirSync(path.join(__dirname, "dataset", dir));
+      fs.rmdirSync(path.join(DIRNAME, "dataset", dir));
       console.log("Remove empty:", dir);
     } catch (e) {}
   });
