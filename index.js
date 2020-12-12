@@ -21,7 +21,20 @@ fs.ensureFileSync(DOWNLOADED_FILE);
 const downloaded = JSON.parse(fs.readFileSync(DOWNLOADED_FILE, "utf-8") || "{}");
 
 async function main() {
-  await crawlPhotos("parts/bricks");
+  let categories = [
+    "parts/bricks",
+    "parts/technic-beams",
+    "parts/technic-bricks",
+    "parts/technic-connectors",
+    "parts/technic-gears",
+    "parts/technic-panels",
+    "parts/technic-special",
+    "parts/technic-steering-suspension-and-engine",
+  ];
+  for (let i = 0; i < categories.length; i++) {
+    await crawlPhotos(categories[i]);
+    console.log("Done:", categories[i]);
+  }
   console.log("OK");
 }
 
