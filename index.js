@@ -3,11 +3,12 @@ const cheerio = require("cheerio");
 const fs = require("fs-extra");
 const Queue = require("better-queue");
 const path = require("path");
+const _ = require("lodash");
 
 async function main() {
   let baseUrl = "https://rebrickable.com";
 
-  let { data } = await axios.get(baseUrl + "/parts/bricks/" + "?format=table");
+  let { data } = await axios.get(baseUrl + "/parts/technic-beams/" + "?format=table");
   let $ = cheerio.load(data);
   let baseData = [];
   $("tr").each((i, e) => {
@@ -76,6 +77,13 @@ async function main() {
       });
     })
   );
+  // Remove empty folder
+  _.forEach(fs.readdirSync(path.join(__dirname, "dataset")), (dir) => {
+    try {
+      fs.rmdirSync(path.join(__dirname, "dataset", dir));
+      console.log("Remove empty:", dir);
+    } catch (e) {}
+  });
 }
 
 function processId(text) {
