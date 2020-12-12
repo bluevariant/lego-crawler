@@ -30,6 +30,20 @@ async function main() {
     "parts/technic-panels",
     "parts/technic-special",
     "parts/technic-steering-suspension-and-engine",
+    "parts/bricks-curved",
+    "parts/bricks-round-and-cones",
+    "parts/bricks-sloped",
+    "parts/bricks-special",
+    "parts/bricks-wedged",
+    "parts/plates",
+    "parts/panels",
+    "parts/plates-angled",
+    "parts/plates-round-and-dishes",
+    "parts/plates-special",
+    "parts/transportation-land",
+    "parts/transportation-sea-and-air",
+    "parts/wheels-and-tyres",
+    "parts/windows-and-doors",
   ];
   for (let i = 0; i < categories.length; i++) {
     try {
