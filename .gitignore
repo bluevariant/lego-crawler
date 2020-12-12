@@ -118,3 +118,6 @@ dist
 .idea
 
 yarn.lock
+
+dataset
+base_data.json
