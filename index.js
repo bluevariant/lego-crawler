@@ -121,7 +121,7 @@ async function crawlPhotos(category) {
         })
         .catch((e) => cb(e));
     },
-    { concurrent: 5, maxRetries: 3 }
+    { concurrent: 5, maxRetries: 5, retryDelay: 1000 }
   );
   await Promise.all(
     baseData.map((v) => {
