@@ -32,8 +32,13 @@ async function main() {
     "parts/technic-steering-suspension-and-engine",
   ];
   for (let i = 0; i < categories.length; i++) {
-    await crawlPhotos(categories[i]);
-    console.log("Done:", categories[i]);
+    try {
+      await crawlPhotos(categories[i]);
+      console.log("Done:", categories[i]);
+    } catch (e) {
+      console.log(e);
+      console.log("Failed:", categories[i]);
+    }
   }
   console.log("OK");
 }
@@ -63,24 +68,25 @@ async function crawlPhotos(category) {
     async (params, cb) => {
       let saveToDir = path.join(DIRNAME, "dataset", params.partId);
       await fs.ensureDir(saveToDir);
-      // if (params.partId === "3005") console.log(params.link);
       if (downloaded[params.link]) {
         console.log("Downloaded:", params.link);
         return cb(null);
       }
-      let { data } = await axios.get(params.link);
+      let data;
+      try {
+        data = (await axios.get(params.link)).data;
+      } catch (e) {
+        console.log(e);
+        return cb(e);
+      }
       let $ = cheerio.load(data);
       let urls = [];
       $("img").each((i, e) => {
         let src = $(e).attr("data-src");
-        // if (params.partId === "3005" && src && src.includes("/media/thumbs/parts/")) {
-        //   console.log(src);
-        // }
         if (src && src.includes("250x250") && src.includes("/media/thumbs/parts/")) {
           urls.push(src);
         }
       });
-      // fs.writeFileSync("images.json", JSON.stringify(urls, null, 2));
       Promise.all(
         urls.map((url) => {
           return new Promise(async (rel, rej) => {
@@ -104,6 +110,7 @@ async function crawlPhotos(category) {
               .catch((e) => {
                 console.error("Downloading failed:", params.partId, url, e.message);
                 rej(e);
+                // rel();
               });
           });
         })
@@ -120,8 +127,9 @@ async function crawlPhotos(category) {
     baseData.map((v) => {
       return new Promise((rel, rej) => {
         downloadTask.push(v, (err, result) => {
-          if (err) rej(err);
-          else rel(result);
+          // if (err) rel(null);
+          // else rel(result);
+          rel(null);
         });
       });
     })
