@@ -7,31 +7,37 @@ const path = require("path");
 async function main() {
   let baseUrl = "https://rebrickable.com";
 
-  let { data } = await axios.get(baseUrl + "/parts/technic-beams/?format=table&page=1");
+  let { data } = await axios.get(baseUrl + "/parts/bricks/" + "?format=table");
   let $ = cheerio.load(data);
   let baseData = [];
   $("tr").each((i, e) => {
     let td = $(e).find("td");
     if (td.length !== 3) return;
-    let id = processId($(td[1]).text());
-    if (id === undefined) return;
+    let partId = processId($(td[1]).text());
+    if (partId === undefined) return;
     let label = $(td[2]).text();
     let link = baseUrl + $($(td[0]).find("a")[0]).attr("href");
-    baseData.push({ id, label, link });
+    baseData.push({ partId, label, link });
   });
+  // fs.writeFileSync("base_data.json", JSON.stringify(baseData, null, 2));
   let downloadTask = new Queue(
     async (params, cb) => {
-      let saveToDir = path.join(__dirname, "dataset", params.id);
+      let saveToDir = path.join(__dirname, "dataset", params.partId);
       await fs.ensureDir(saveToDir);
+      // if (params.partId === "3005") console.log(params.link);
       let { data } = await axios.get(params.link);
       let $ = cheerio.load(data);
       let urls = [];
       $("img").each((i, e) => {
         let src = $(e).attr("data-src");
+        // if (params.partId === "3005" && src && src.includes("/media/thumbs/parts/")) {
+        //   console.log(src);
+        // }
         if (src && src.includes("250x250") && src.includes("/media/thumbs/parts/")) {
           urls.push(src);
         }
       });
+      // fs.writeFileSync("images.json", JSON.stringify(urls, null, 2));
       Promise.all(
         urls.map((url) => {
           return new Promise(async (rel, rej) => {
@@ -40,22 +46,22 @@ async function main() {
             let saveTo = path.join(saveToDir, name);
             if (await fs.pathExists(saveTo)) {
               rel();
-              console.log("Existed:", saveTo);
+              console.log("Existed:", params.partId, saveTo);
               return;
             }
             downloadImage(url, saveTo)
               .then(() => {
-                console.log("Downloading done:", saveTo);
+                console.log("Downloading done:", params.partId, saveTo);
                 rej();
               })
               .catch((e) => {
-                console.error("Downloading failed:", url, e.message);
+                console.error("Downloading failed:", params.partId, url, e.message);
                 rej(e);
               });
           });
         })
       )
-        .then((v) => cb(null))
+        .then((v) => cb(null, v))
         .catch((e) => cb(e));
     },
     { concurrent: 5, maxRetries: 3 }
