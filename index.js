@@ -11,6 +11,7 @@ let DIRNAME;
 let driveDir = "../drive";
 if (fs.existsSync(driveDir)) {
   DIRNAME = path.join(driveDir, "lego");
+  fs.ensureDirSync(DIRNAME);
 } else {
   DIRNAME = __dirname;
 }
