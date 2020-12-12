@@ -11,10 +11,14 @@ let DIRNAME;
 let driveDir = "../drive/MyDrive";
 if (fs.existsSync(driveDir)) {
   DIRNAME = path.join(driveDir, "lego");
-  fs.ensureDirSync(DIRNAME);
 } else {
-  DIRNAME = __dirname;
+  DIRNAME = path.join(__dirname, "drive/MyDrive");
 }
+fs.ensureDirSync(DIRNAME);
+const DOWNLOADED_FILE = path.join(DIRNAME, "downloaded.json");
+fs.ensureFileSync(DOWNLOADED_FILE);
+
+const downloaded = JSON.parse(fs.readFileSync(DOWNLOADED_FILE, "utf-8") || "{}");
 
 async function main() {
   await crawlPhotos("parts/bricks");
@@ -47,6 +51,10 @@ async function crawlPhotos(category) {
       let saveToDir = path.join(DIRNAME, "dataset", params.partId);
       await fs.ensureDir(saveToDir);
       // if (params.partId === "3005") console.log(params.link);
+      if (downloaded[params.link]) {
+        console.log("Downloaded:", params.link);
+        return cb(null);
+      }
       let { data } = await axios.get(params.link);
       let $ = cheerio.load(data);
       let urls = [];
@@ -87,7 +95,10 @@ async function crawlPhotos(category) {
           });
         })
       )
-        .then((v) => cb(null, v))
+        .then((v) => {
+          downloaded[params.link] = true;
+          updateDownloaded().then(() => cb(null, v));
+        })
         .catch((e) => cb(e));
     },
     { concurrent: 5, maxRetries: 3 }
@@ -152,6 +163,21 @@ function downloadImage(url, imagePath) {
       if (err) rej(err);
       else rel();
     });
+  });
+}
+
+let updateDownloadedTask = new Queue(
+  (params, cb) => {
+    fs.writeFile(DOWNLOADED_FILE, JSON.stringify(downloaded, null, 2))
+      .then(() => cb(null))
+      .catch(() => cb(null));
+  },
+  { concurrent: 1 }
+);
+
+function updateDownloaded() {
+  return new Promise((rel) => {
+    updateDownloadedTask.push({}, rel);
   });
 }
 
