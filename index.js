@@ -33,11 +33,12 @@ async function crawlPhotos(category) {
   $("tr").each((i, e) => {
     let td = $(e).find("td");
     if (td.length !== 3) return;
-    let partId = processId($(td[1]).text());
+    let realId = $(td[1]).text();
+    let partId = processId(realId);
     if (partId === undefined) return;
     let label = $(td[2]).text();
     let link = BASE_URL + $($(td[0]).find("a")[0]).attr("href");
-    baseData.push({ partId, label, link });
+    baseData.push({ partId, realId, label, link });
   });
   // fs.writeFileSync("base_data.json", JSON.stringify(baseData, null, 2));
   let downloadTask = new Queue(
@@ -65,14 +66,18 @@ async function crawlPhotos(category) {
             name = splitUrl[splitUrl.length - 2];
             let saveTo = path.join(saveToDir, name);
             if (await fs.pathExists(saveTo)) {
-              rel();
               console.log("Existed:", params.partId, saveTo);
+              fs.writeFile(saveTo + ".txt", [category, params.partId, params.realId, params.label, params.link].join("\r\n"))
+                .then(rel)
+                .catch(rel);
               return;
             }
             downloadImage(url, saveTo)
               .then(() => {
                 console.log("Downloading done:", params.partId, saveTo);
-                rej();
+                fs.writeFile(saveTo + ".txt", [category, params.partId, params.realId, params.label, params.link].join("\r\n"))
+                  .then(rel)
+                  .catch(rel);
               })
               .catch((e) => {
                 console.error("Downloading failed:", params.partId, url, e.message);
