@@ -18,6 +18,7 @@ if (fs.existsSync(driveDir)) {
 
 async function main() {
   await crawlPhotos("parts/bricks");
+  console.log("OK");
 }
 
 async function crawlPhotos(category) {
